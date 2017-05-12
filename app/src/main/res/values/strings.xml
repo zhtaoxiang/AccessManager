@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AccessManager</string>
+    <string name="accessibility_open_drawer">Open Access Manager Navigation Drawer</string>
+    <string name="accessibility_close_drawer">Close Access Manager Navigation Drawer</string>
+    <string name="drawer_item_general">General</string>
+    <string name="drawer_item_manager_list">Manager List</string>
+</resources>
