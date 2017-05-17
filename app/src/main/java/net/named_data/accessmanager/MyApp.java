@@ -26,10 +26,6 @@ import net.named_data.accessmanager.database.DataBaseHelper;
 import net.named_data.accessmanager.service.AccessManagerService;
 import net.named_data.accessmanager.util.Common;
 
-/**
- * Created by zhtaoxiang on 5/16/17.
- */
-
 public class MyApp extends Application {
   private static final String TAG = "MyApp";
 
