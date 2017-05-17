@@ -26,5 +26,9 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile('net.named-data:jndn-android:0.14') {
+        exclude group: 'org.xerial'
+    }
+    compile 'net.named-data.jndn-xx:jndn-xx-util:0.0.1'
     testCompile 'junit:junit:4.12'
 }
