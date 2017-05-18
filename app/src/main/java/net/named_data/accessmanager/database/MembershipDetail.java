@@ -18,6 +18,7 @@
  */
 package net.named_data.accessmanager.database;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MembershipDetail {
@@ -53,5 +54,12 @@ public class MembershipDetail {
 
   public void setScheduleList(List<String> scheduleList) {
     this.scheduleList = scheduleList;
+  }
+
+  @Override
+  public String toString() {
+    String[] temp = new String[scheduleList.size()];
+    scheduleList.toArray(temp);
+    return "[ id:" + id + ", key:" + key + ", scheduleList:(" + Arrays.toString(temp) + ") ]";
   }
 }

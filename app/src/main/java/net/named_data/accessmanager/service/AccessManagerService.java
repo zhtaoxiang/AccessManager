@@ -53,8 +53,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class AccessManagerService extends Service {
   private static final String TAG = "AccessManagerService";
 
-  public static String prefix = "/org/openmhealth/zhehao/READ";
-
   public static boolean isRunning = false;
   private final IBinder mBinder = new LocalBinder();
   private Face m_face;
@@ -84,18 +82,19 @@ public class AccessManagerService extends Service {
       // modify the indicating variable
       isRunning = true;
       // preload existing managers
-      try {
-        addSchedules(db.getAllSchedules());
-        addMembers(db.getAllMembers());
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+//      try {
+//        addSchedules(db.getAllSchedules());
+//        addMembers(db.getAllMembers());
+//      } catch (Exception e) {
+//        e.printStackTrace();
+//      }
       // register prefix to accept incoming Interest
       faceCommandExecutor.execute(new Runnable() {
         @Override
         public void run() {
           try {
-            m_face.registerPrefix(new Name(prefix), new ReceiveInterest(), new RegisterFailed());
+            m_face.registerPrefix(new Name(Common.accessControlPrefix),
+              new ReceiveInterest(), new RegisterFailed());
           } catch (IOException | SecurityException e) {
             e.printStackTrace();
           }
@@ -145,8 +144,10 @@ public class AccessManagerService extends Service {
   }
 
   public void addOneSchedule(ScheduleDetail scheduleDetail) throws Exception {
+
     if(scheduleDetail == null)
       return;
+    Log.d(TAG, "add schedule: " + scheduleDetail.toString());
     if(scheduleNameAccessManagerMap.get(scheduleDetail.getName()) != null) {
       throw new Exception("Cannot add a schedule with an existing name!");
     }
@@ -158,7 +159,7 @@ public class AccessManagerService extends Service {
           new Name(Common.userPrefix), // user prefix
           new Name(scheduleDetail.getPrefix()), //data type
           new AndroidSqlite3GroupManagerDb(getApplicationContext().getFilesDir().getAbsolutePath()
-            + "/" + Common.MANAGE_DB_NAME), // database
+            + "/" + Common.MANAGER_DB_NAME), // database
           Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, Common.keyChain);
         prefixAccessManagerMap.put(scheduleDetail.getPrefix(), gm);
       } catch (SecurityException e) {
@@ -169,8 +170,8 @@ public class AccessManagerService extends Service {
     Schedule schedule = new Schedule();
     try {
       RepetitiveInterval interval = new RepetitiveInterval(
-        Schedule.fromIsoString(scheduleDetail.getStartDate()),
-        Schedule.fromIsoString(scheduleDetail.getEndDate()),
+        Schedule.fromIsoString(scheduleDetail.getStartDate() + Common.DATE_SUFFIX),
+        Schedule.fromIsoString(scheduleDetail.getEndDate() + Common.DATE_SUFFIX),
         scheduleDetail.getStartHour(), scheduleDetail.getEndHour(), 1,
         RepetitiveInterval.RepeatUnit.DAY);
       schedule.addWhiteInterval(interval);
@@ -190,8 +191,10 @@ public class AccessManagerService extends Service {
   }
 
   public void addOneMember(final MembershipDetail membershipDetail) throws Exception {
+
     if (membershipDetail == null)
       return;
+    Log.d(TAG, "add member: " + membershipDetail.toString());
     for(final String scheduleName : membershipDetail.getScheduleList()) {
       final GroupManager gm = scheduleNameAccessManagerMap.get(scheduleName);
       if(gm == null) {

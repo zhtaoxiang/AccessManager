@@ -21,7 +21,6 @@
         </activity>
         <service
             android:name=".service.AccessManagerService"
-            android:process="net.named_data.accessmanager.service.AccessManagerService"
             android:label="@string/service_name"
             android:exported="false" >
             <intent-filter>

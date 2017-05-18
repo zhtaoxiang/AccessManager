@@ -35,6 +35,7 @@ public class MyApp extends Application {
     DataBaseHelper.DATABASE_NAME = Common.userPrefix.split("/")[3] + ".db";
     Log.d(TAG, "userPrefix is " + Common.userPrefix);
     Log.d(TAG, "database name is " + DataBaseHelper.DATABASE_NAME);
+
     // start the background service when the app is launched
     startService(new Intent(this, AccessManagerService.class));
   }

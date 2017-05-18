@@ -85,4 +85,10 @@ public class ScheduleDetail {
   public void setEndHour(int endHour) {
     this.endHour = endHour;
   }
+
+  @Override
+  public String toString() {
+    return "[ name:" + name + ", prefix:" + prefix + ", startDate:" + startDate + ", endDate:"
+      + endDate + ", startHour:" + startHour + ", endHour:" + endHour + " ]";
+  }
 }

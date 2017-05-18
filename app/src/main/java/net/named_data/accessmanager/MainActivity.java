@@ -18,7 +18,12 @@
  */
 package net.named_data.accessmanager;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -27,10 +32,30 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import net.named_data.accessmanager.service.AccessManagerService;
+
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
   implements DrawerFragment.DrawerCallbacks {
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+    // Bind to LocalService
+    Intent intent = new Intent(this, AccessManagerService.class);
+    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+  }
+
+  @Override
+  protected void onStop() {
+    super.onStop();
+    // Unbind from the service
+    if (mBound) {
+      unbindService(mConnection);
+      mBound = false;
+    }
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -46,11 +71,11 @@ public class MainActivity extends AppCompatActivity
     if (m_drawerFragment == null) {
       ArrayList<DrawerFragment.DrawerItem> items = new ArrayList<>();
 
-      items.add(new DrawerFragment.DrawerItem(R.string.drawer_item_general, 0,
-        DRAWER_ITEM_GENERAL));
+      items.add(new DrawerFragment.DrawerItem(R.string.drawer_item_schedule_list, 0,
+        DRAWER_ITEM_SCHEDULE_LIST));
 
-      items.add(new DrawerFragment.DrawerItem(R.string.drawer_item_manager_list, 0,
-        DRAWER_ITEM_MANAGER_LIST));
+      items.add(new DrawerFragment.DrawerItem(R.string.drawer_item_member_list, 0,
+        DRAWER_ITEM_MEMBER_LIST));
 
       m_drawerFragment = DrawerFragment.newInstance(items);
 
@@ -111,11 +136,11 @@ public class MainActivity extends AppCompatActivity
     Fragment fragment = fragmentManager.findFragmentByTag(fragmentTag);
     if (fragment == null) {
       switch (itemCode) {
-        case DRAWER_ITEM_GENERAL:
-          fragment = MainFragment.newInstance();
+        case DRAWER_ITEM_SCHEDULE_LIST:
+          fragment = ScheduleFragment.newInstance();
           break;
-        case DRAWER_ITEM_MANAGER_LIST:
-          fragment = ManagerList.newInstance();
+        case DRAWER_ITEM_MEMBER_LIST:
+          fragment = MemberFragment.newInstance();
           break;
         default:
           return;
@@ -130,7 +155,27 @@ public class MainActivity extends AppCompatActivity
       .commit();
   }
 
+  /** Defines callbacks for service binding, passed to bindService() */
+  private ServiceConnection mConnection = new ServiceConnection() {
+
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+      // We've bound to LocalService, cast the IBinder and get LocalService instance
+      AccessManagerService.LocalBinder binder = (AccessManagerService.LocalBinder) service;
+      mService = binder.getServiceInstance();
+      mBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName arg0) {
+      mBound = false;
+    }
+  };
+
   //////////////////////////////////////////////////////////////////////////////
+  AccessManagerService mService;
+  boolean mBound = false;
 
   /** Title that is to be displayed in the ActionBar */
   private int m_actionBarTitleId = -1;
@@ -139,6 +184,6 @@ public class MainActivity extends AppCompatActivity
   private DrawerFragment m_drawerFragment;
 
   /** Item code for drawer items: For use in onDrawerItemSelected() callback */
-  public static final int DRAWER_ITEM_GENERAL = 1;
-  public static final int DRAWER_ITEM_MANAGER_LIST = 2;
+  public static final int DRAWER_ITEM_SCHEDULE_LIST = 1;
+  public static final int DRAWER_ITEM_MEMBER_LIST = 2;
 }
