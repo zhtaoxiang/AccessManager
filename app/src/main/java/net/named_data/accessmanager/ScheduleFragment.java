@@ -38,7 +38,8 @@ import net.named_data.accessmanager.database.ScheduleDetail;
 import java.util.List;
 
 
-public class ScheduleFragment extends ListFragment implements ScheduleCreateDialogFragment.OnScheduleCreateRequested{
+public class ScheduleFragment extends ListFragment
+  implements ScheduleCreateDialogFragment.OnScheduleCreateRequested{
   private ProgressBar m_reloadingListProgressBar;
   private ScheduleListAdapter m_scheduleListAdapter;
 

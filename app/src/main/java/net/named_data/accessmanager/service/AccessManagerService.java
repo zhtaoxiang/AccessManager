@@ -205,7 +205,7 @@ public class AccessManagerService extends Service {
         @Override
         public void run() {
           Interest interest = new Interest();
-          interest.setName(new Name(membershipDetail.getKey()));
+          interest.setName(new Name(membershipDetail.getCert()));
           try {
             m_face.expressInterest(interest,
               new OnData() {

@@ -22,14 +22,24 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MembershipDetail {
+  private String name;
   private String id;
-  private String key;
+  private String cert;
   private List<String> scheduleList;
 
-  public MembershipDetail(String id, String key, List<String> scheduleList) {
+  public MembershipDetail(String name, String id, String cert, List<String> scheduleList) {
+    this.name = name;
     this.id = id;
-    this.key = key;
+    this.cert = cert;
     this.scheduleList = scheduleList;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public String getId() {
@@ -40,12 +50,12 @@ public class MembershipDetail {
     this.id = id;
   }
 
-  public String getKey() {
-    return key;
+  public String getCert() {
+    return cert;
   }
 
-  public void setKey(String key) {
-    this.key = key;
+  public void setCert(String cert) {
+    this.cert = cert;
   }
 
   public List<String> getScheduleList() {
@@ -60,6 +70,6 @@ public class MembershipDetail {
   public String toString() {
     String[] temp = new String[scheduleList.size()];
     scheduleList.toArray(temp);
-    return "[ id:" + id + ", key:" + key + ", scheduleList:(" + Arrays.toString(temp) + ") ]";
+    return "[ name: " + name + ", id:" + id + ", key:" + cert + ", scheduleList:(" + Arrays.toString(temp) + ") ]";
   }
 }

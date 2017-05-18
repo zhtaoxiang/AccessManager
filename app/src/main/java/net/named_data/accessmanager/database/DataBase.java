@@ -81,8 +81,9 @@ public class DataBase {
     List<MembershipDetail> result = new ArrayList<>();
     SQLiteDatabase db = dbHelper.getReadableDatabase();
     String[] projection = {
+      MembershipTable.MEMBER_NAME,
       MembershipTable.MEMBER_ID,
-      MembershipTable.MEMBER_KEY,
+      MembershipTable.MEMBER_CERT,
       MembershipTable.SCHEDULE_LIST
     };
 
@@ -100,8 +101,8 @@ public class DataBase {
     if (cursor.moveToFirst()) {
       do {
         // Adding contact to list
-        List<String> scheduleList = Arrays.asList(cursor.getString(2).split(MembershipTable.SCHEDULE_DELIMITER));
-        result.add(new MembershipDetail(cursor.getString(0), cursor.getString(1), scheduleList));
+        List<String> scheduleList = Arrays.asList(cursor.getString(3).split(MembershipTable.SCHEDULE_DELIMITER));
+        result.add(new MembershipDetail(cursor.getString(0), cursor.getString(1), cursor.getString(2), scheduleList));
       } while (cursor.moveToNext());
     }
     return result;
@@ -121,8 +122,9 @@ public class DataBase {
 
   public void insertMember(MembershipDetail membershipDetail) {
     ContentValues values = new ContentValues();
+    values.put(MembershipTable.MEMBER_NAME, membershipDetail.getName());
     values.put(MembershipTable.MEMBER_ID, membershipDetail.getId());
-    values.put(MembershipTable.MEMBER_KEY, membershipDetail.getKey());
+    values.put(MembershipTable.MEMBER_CERT, membershipDetail.getCert());
     StringBuilder sb = new StringBuilder();
     List<String> scheduleList = membershipDetail.getScheduleList();
     if ((scheduleList != null) && (!scheduleList.isEmpty())) {

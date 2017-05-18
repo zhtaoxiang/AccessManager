@@ -23,13 +23,15 @@ import android.provider.BaseColumns;
 public abstract class MembershipTable implements BaseColumns {
   public static final String SCHEDULE_DELIMITER = "\t";
   public static final String TABLE_NAME = "MembershipTable";
-  public static final String MEMBER_ID = "member_prefix";
-  public static final String MEMBER_KEY = "member_key";
+  public static final String MEMBER_NAME = "member_name";
+  public static final String MEMBER_ID = "member_id";
+  public static final String MEMBER_CERT = "member_cert";
   public static final String SCHEDULE_LIST = "schedule_list";
   public static final String SQL_CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " ("
     + _ID + " INTEGER PRIMARY KEY, "
+    + MEMBER_NAME + " TEXT UNIQUE, "
     + MEMBER_ID + " TEXT UNIQUE, "
-    + MEMBER_KEY + " TEXT, "
+    + MEMBER_CERT + " TEXT, "
     + SCHEDULE_LIST + " TEXT "
     + ")";
 }

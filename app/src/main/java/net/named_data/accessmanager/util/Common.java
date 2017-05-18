@@ -29,7 +29,7 @@ import net.named_data.jndn.security.SecurityException;
 public abstract class Common {
   public static final int KEY_SIZE = 2048;
   public static final int KEY_FRESHNESS_HOURS = 24 * 365;
-  public static final String MANAGER_DB_NAME = "manager.db";
+  public static final String MANAGER_DB_NAME = "manager.db"; //TODO: for each gm, we should provide a seperate db
   public static final String DATE_SUFFIX = "T000000";
 
   // TODO: these two variables should be gotten from id manager
