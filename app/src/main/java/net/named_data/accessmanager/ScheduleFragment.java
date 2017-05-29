@@ -34,12 +34,13 @@ import android.widget.TextView;
 
 import net.named_data.accessmanager.database.DataBase;
 import net.named_data.accessmanager.database.ScheduleDetail;
+import net.named_data.accessmanager.util.Common;
 
 import java.util.List;
 
 
 public class ScheduleFragment extends ListFragment
-  implements ScheduleCreateDialogFragment.OnScheduleCreateRequested{
+  implements ScheduleCreateDialogFragment.OnScheduleAddRequested{
   private ProgressBar m_reloadingListProgressBar;
   private ScheduleListAdapter m_scheduleListAdapter;
 
@@ -124,10 +125,10 @@ public class ScheduleFragment extends ListFragment
   }
 
   @Override
-  public void createSchdule(ScheduleDetail scheduleDetail) {
-    DataBase.getInstance(getContext()).insertSchedule(scheduleDetail);
+  public void addSchedule(ScheduleDetail scheduleDetail) {
     try {
-      ((MainActivity)getActivity()).mService.addOneSchedule(scheduleDetail);
+      ((MainActivity)getActivity()).mService.addOneSchedule(scheduleDetail, true);
+      DataBase.getInstance(getContext()).insertSchedule(scheduleDetail);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -170,7 +171,7 @@ public class ScheduleFragment extends ListFragment
       }
       ScheduleDetail info = getItem(position);
       holder.m_scheduleName.setText(info.getName());
-      holder.m_scheduleDataType.setText("Data Type: " + info.getPrefix());
+      holder.m_scheduleDataType.setText("Prefix: " + Common.accessControlPrefix + info.getPrefix());
       holder.m_scheduleDate.setText("Date: " + info.getStartDate() + " - " + info.getEndDate());
       holder.m_scheduleHour.setText("Hour: " + info.getStartHour() + " - " + info.getEndHour());
       return convertView;

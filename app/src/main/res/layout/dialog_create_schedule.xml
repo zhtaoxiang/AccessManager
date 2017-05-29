@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:id="@+id/ScrollView01"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            xmlns:android="http://schemas.android.com/apk/res/android">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/default_dialog_margin"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/title_create_schedule"
-        android:layout_gravity="center_horizontal"/>
 
     <EditText
         android:id="@+id/schedule_name"
@@ -24,6 +20,11 @@
         android:selectAllOnFocus="true">
         <requestFocus />
     </EditText>
+
+    <ListView
+        android:id="@+id/schedule_data_type"
+        android:layout_width="match_parent"
+        android:layout_height="100dp" />
 
     <EditText
         android:id="@+id/schedule_start_date"
@@ -70,3 +71,4 @@
     </EditText>
 
 </LinearLayout>
+</ScrollView>

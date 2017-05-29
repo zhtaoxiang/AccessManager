@@ -20,23 +20,58 @@ package net.named_data.accessmanager.util;
 
 import net.named_data.jndn.Name;
 import net.named_data.jndn.security.KeyChain;
+import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.security.identity.IdentityManager;
 import net.named_data.jndn.security.identity.MemoryIdentityStorage;
 import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
 import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
-import net.named_data.jndn.security.SecurityException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class Common {
   public static final int KEY_SIZE = 2048;
   public static final int KEY_FRESHNESS_HOURS = 24 * 365;
-  public static final String MANAGER_DB_NAME = "manager.db"; //TODO: for each gm, we should provide a seperate db
   public static final String DATE_SUFFIX = "T000000";
 
-  // TODO: these two variables should be gotten from id manager
+  // TODO: these 3 variables should be gotten from id manager
   public static String userPrefix = "/org/openmhealth/haitao";
   public static String accessControlPrefix = userPrefix + "/READ";
   public static KeyChain keyChain = configureKeyChain();
 
+  // Data types
+  public static final String[] DATA_TYPES = new String[]{
+    "All Data",
+    "Mobile Caputured Data",
+    "DPU processed Data"};
+  // data type prefixes
+  public static final String[] DATA_TYPE_PREFIXES = new String[] {
+    "",                                              // all data
+    "/fitness/physical_activity/time_location",      // Mobile Caputured Data
+    "/fitness/physical_activity/processed_result"    // DPU processed Data
+  };
+  // database name for access managers
+  // notice that when use the data name, a use
+  public static final Map<String, String> DATA_TYPE_PREFIXES_TO_DB_MAP;
+  static
+  {
+    DATA_TYPE_PREFIXES_TO_DB_MAP = new HashMap<>();
+    DATA_TYPE_PREFIXES_TO_DB_MAP.put("", "_all_data.db");
+    DATA_TYPE_PREFIXES_TO_DB_MAP.put("/fitness/physical_activity/time_location", "_mobile_data.db");
+    DATA_TYPE_PREFIXES_TO_DB_MAP.put("/fitness/physical_activity/processed_result", "_dpu_data.db");
+  }
+
+
+  public static final String[] PREDEFINED_ENTITY_NAMES = new String[]{"DPU", "DVU"};
+
+  // Currently, the user is only allowed to authorize DPU and DVU to fetch and process his/her data
+  public static final Map<String, EntityInfo> PREDEFINED_ENTITY_NAME_MAP;
+  static
+  {
+    PREDEFINED_ENTITY_NAME_MAP = new HashMap<>();
+    PREDEFINED_ENTITY_NAME_MAP.put("DPU", new EntityInfo("DPU", "/org/openmhealth/bounding_box", ""));
+    PREDEFINED_ENTITY_NAME_MAP.put("DVU", new EntityInfo("DVU", "/org/openmhealth/dvu", ""));
+  }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   private static KeyChain

@@ -35,6 +35,7 @@ import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.der.DerDecodingException;
 import net.named_data.jndn.encrypt.AndroidSqlite3GroupManagerDb;
@@ -49,6 +50,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+
+import static net.named_data.accessmanager.util.Common.DATA_TYPE_PREFIXES_TO_DB_MAP;
 
 public class AccessManagerService extends Service {
   private static final String TAG = "AccessManagerService";
@@ -82,12 +85,12 @@ public class AccessManagerService extends Service {
       // modify the indicating variable
       isRunning = true;
       // preload existing managers
-//      try {
-//        addSchedules(db.getAllSchedules());
+      try {
+        addSchedules(db.getAllSchedules());
 //        addMembers(db.getAllMembers());
-//      } catch (Exception e) {
-//        e.printStackTrace();
-//      }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       // register prefix to accept incoming Interest
       faceCommandExecutor.execute(new Runnable() {
         @Override
@@ -143,7 +146,7 @@ public class AccessManagerService extends Service {
     this.stopSelf();
   }
 
-  public void addOneSchedule(ScheduleDetail scheduleDetail) throws Exception {
+  public void addOneSchedule(ScheduleDetail scheduleDetail, boolean isAddedUsingUI) throws Exception {
 
     if(scheduleDetail == null)
       return;
@@ -159,26 +162,29 @@ public class AccessManagerService extends Service {
           new Name(Common.userPrefix), // user prefix
           new Name(scheduleDetail.getPrefix()), //data type
           new AndroidSqlite3GroupManagerDb(getApplicationContext().getFilesDir().getAbsolutePath()
-            + "/" + Common.MANAGER_DB_NAME), // database
+            + "/" + DATA_TYPE_PREFIXES_TO_DB_MAP.get(scheduleDetail.getPrefix())),
+          // TODO: the database should have a user specific prefix
           Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, Common.keyChain);
         prefixAccessManagerMap.put(scheduleDetail.getPrefix(), gm);
+        scheduleNameAccessManagerMap.put(scheduleDetail.getName(), gm);
       } catch (SecurityException e) {
         e.printStackTrace();
       }
     }
-    // add a schedule
-    Schedule schedule = new Schedule();
-    try {
-      RepetitiveInterval interval = new RepetitiveInterval(
-        Schedule.fromIsoString(scheduleDetail.getStartDate() + Common.DATE_SUFFIX),
-        Schedule.fromIsoString(scheduleDetail.getEndDate() + Common.DATE_SUFFIX),
-        scheduleDetail.getStartHour(), scheduleDetail.getEndHour(), 1,
-        RepetitiveInterval.RepeatUnit.DAY);
-      schedule.addWhiteInterval(interval);
-      gm.addSchedule(scheduleDetail.getName(), schedule);
-      scheduleNameAccessManagerMap.put(scheduleDetail.getName(), gm);
-    } catch (EncodingException | GroupManagerDb.Error e) {
-      e.printStackTrace();
+    // add a schedule: this adds a schedule to the database
+    if(isAddedUsingUI) {
+      Schedule schedule = new Schedule();
+      try {
+        RepetitiveInterval interval = new RepetitiveInterval(
+          Schedule.fromIsoString(scheduleDetail.getStartDate() + Common.DATE_SUFFIX),
+          Schedule.fromIsoString(scheduleDetail.getEndDate() + Common.DATE_SUFFIX),
+          scheduleDetail.getStartHour(), scheduleDetail.getEndHour(), 1,
+          RepetitiveInterval.RepeatUnit.DAY);
+        schedule.addWhiteInterval(interval);
+        gm.addSchedule(scheduleDetail.getName(), schedule);
+      } catch (EncodingException | GroupManagerDb.Error e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -186,7 +192,7 @@ public class AccessManagerService extends Service {
     if (scheduleDetailList == null || scheduleDetailList.isEmpty())
       return;
     for(ScheduleDetail one : scheduleDetailList) {
-      addOneSchedule(one);
+      addOneSchedule(one, false);
     }
   }
 
@@ -216,6 +222,12 @@ public class AccessManagerService extends Service {
                   } catch (DerDecodingException | GroupManagerDb.Error e) {
                     e.printStackTrace();
                   }
+                }
+              }, new OnTimeout() {
+                @Override
+                public void onTimeout(Interest interest) {
+                  //TODO: if failed, try it again (but when?)
+                  Log.d(TAG, "failed to fetch the member's certificate");
                 }
               });
           } catch (IOException e) {

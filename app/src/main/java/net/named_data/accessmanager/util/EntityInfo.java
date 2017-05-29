@@ -16,31 +16,16 @@
  * You should have received a copy of the GNU General Public License along with
  * NDNFit Access Manage, e.g., in COPYING file.  If not, see <http://www.gnu.org/licenses/>.
  */
-package net.named_data.accessmanager.database;
+package net.named_data.accessmanager.util;
 
-import net.named_data.accessmanager.util.EntityInfo;
-
-import java.util.Arrays;
-import java.util.List;
-
-public class MembershipDetail {
+public class EntityInfo {
   private String name;
   private String id;
   private String cert;
-  private List<String> scheduleList;
-
-  public MembershipDetail(String name, String id, String cert, List<String> scheduleList) {
+  public EntityInfo(String name, String id, String cert) {
     this.name = name;
     this.id = id;
     this.cert = cert;
-    this.scheduleList = scheduleList;
-  }
-
-  public MembershipDetail(EntityInfo entityInfo, List<String> scheduleList) {
-    this.name = entityInfo.getName();
-    this.id = entityInfo.getId();
-    this.cert = entityInfo.getCert();
-    this.scheduleList = scheduleList;
   }
 
   public String getName() {
@@ -65,20 +50,5 @@ public class MembershipDetail {
 
   public void setCert(String cert) {
     this.cert = cert;
-  }
-
-  public List<String> getScheduleList() {
-    return scheduleList;
-  }
-
-  public void setScheduleList(List<String> scheduleList) {
-    this.scheduleList = scheduleList;
-  }
-
-  @Override
-  public String toString() {
-    String[] temp = new String[scheduleList.size()];
-    scheduleList.toArray(temp);
-    return "[ name: " + name + ", id:" + id + ", key:" + cert + ", scheduleList:(" + Arrays.toString(temp) + ") ]";
   }
 }

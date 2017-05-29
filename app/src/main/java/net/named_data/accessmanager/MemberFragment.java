@@ -39,7 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MemberFragment extends ListFragment
-  implements MemberCrateDialogFragment.OnMemberCreateRequested{
+  implements MemberCrateDialogFragment.OnMemberAddRequested{
   private ProgressBar m_reloadingListProgressBar;
   private MemberListAdapter m_memberListAdapter;
 
@@ -119,10 +119,10 @@ public class MemberFragment extends ListFragment
   }
 
   @Override
-  public void createMember(MembershipDetail membershipDetail) {
-    DataBase.getInstance(getContext()).insertMember(membershipDetail);
+  public void addMember(MembershipDetail membershipDetail) {
     try {
       ((MainActivity)getActivity()).mService.addOneMember(membershipDetail);
+      DataBase.getInstance(getContext()).insertMember(membershipDetail);
     } catch (Exception e) {
       e.printStackTrace();
     }

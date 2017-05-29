@@ -108,6 +108,30 @@ public class DataBase {
     return result;
   }
 
+  public String[] getAllScheduleNames() {
+    SQLiteDatabase db = dbHelper.getReadableDatabase();
+    String[] projection = {
+      ScheduleTable.SCHEDULE_NAME
+    };
+    Cursor cursor = db.query(
+      ScheduleTable.TABLE_NAME,
+      projection,                               // The columns to return
+      null,                                     // The columns for the WHERE clause
+      null,                                     // The values for the WHERE clause
+      null,                                     // don't group the rows
+      null,                                     // don't filter by row groups
+      null                                      // The sort order
+    );
+    String[] result = new String[cursor.getCount()];
+    int i = 0;
+    if (cursor.moveToFirst()) {
+      do {
+        result[i++] = cursor.getString(0);
+      } while (cursor.moveToNext());
+    }
+    return result;
+  }
+
   public void insertSchedule(ScheduleDetail scheduleDetail) {
     ContentValues values = new ContentValues();
     values.put(ScheduleTable.SCHEDULE_NAME, scheduleDetail.getName());
