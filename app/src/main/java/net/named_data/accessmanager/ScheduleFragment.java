@@ -171,7 +171,7 @@ public class ScheduleFragment extends ListFragment
       }
       ScheduleDetail info = getItem(position);
       holder.m_scheduleName.setText(info.getName());
-      holder.m_scheduleDataType.setText("Prefix: " + Common.accessControlPrefix + info.getPrefix());
+      holder.m_scheduleDataType.setText("Prefix: " + Common.accessControlPrefix + info.getDataType());
       holder.m_scheduleDate.setText("Date: " + info.getStartDate() + " - " + info.getEndDate());
       holder.m_scheduleHour.setText("Hour: " + info.getStartHour() + " - " + info.getEndHour());
       return convertView;

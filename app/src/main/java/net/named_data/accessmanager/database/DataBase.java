@@ -135,7 +135,7 @@ public class DataBase {
   public void insertSchedule(ScheduleDetail scheduleDetail) {
     ContentValues values = new ContentValues();
     values.put(ScheduleTable.SCHEDULE_NAME, scheduleDetail.getName());
-    values.put(ScheduleTable.PREFIX, scheduleDetail.getPrefix());
+    values.put(ScheduleTable.PREFIX, scheduleDetail.getDataType());
     values.put(ScheduleTable.START_DATE, scheduleDetail.getStartDate());
     values.put(ScheduleTable.END_DATE, scheduleDetail.getEndDate());
     values.put(ScheduleTable.START_HOUR, scheduleDetail.getStartHour());

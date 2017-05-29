@@ -21,17 +21,17 @@ package net.named_data.accessmanager.database;
 public class ScheduleDetail {
   private String name;
   // this is actual the datatype prefix, but not the entire prefix
-  // /org/openmhealth/haitao/READ/<prefix>
-  private String prefix;
+  // /org/openmhealth/haitao/READ/<dataType>
+  private String dataType;
   private String startDate;
   private String endDate;
   private int startHour;
   private int endHour;
 
-  public ScheduleDetail(String name, String prefix, String startDate, String endDate,
+  public ScheduleDetail(String name, String dataType, String startDate, String endDate,
                         int startHour, int endHour) {
     this.name = name;
-    this.prefix = prefix;
+    this.dataType = dataType;
     this.startDate = startDate;
     this.endDate = endDate;
     this.startHour = startHour;
@@ -46,12 +46,12 @@ public class ScheduleDetail {
     this.name = name;
   }
 
-  public String getPrefix() {
-    return prefix;
+  public String getDataType() {
+    return dataType;
   }
 
-  public void setPrefix(String prefix) {
-    this.prefix = prefix;
+  public void setDataType(String dataType) {
+    this.dataType = dataType;
   }
 
   public String getStartDate() {
@@ -88,7 +88,7 @@ public class ScheduleDetail {
 
   @Override
   public String toString() {
-    return "[ name:" + name + ", prefix:" + prefix + ", startDate:" + startDate + ", endDate:"
+    return "[ name:" + name + ", dataType:" + dataType + ", startDate:" + startDate + ", endDate:"
       + endDate + ", startHour:" + startHour + ", endHour:" + endHour + " ]";
   }
 }

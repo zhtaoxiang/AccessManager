@@ -155,17 +155,17 @@ public class AccessManagerService extends Service {
       throw new Exception("Cannot add a schedule with an existing name!");
     }
     // check whether the manager exists or not. if not, create a new one
-    GroupManager gm = prefixAccessManagerMap.get(scheduleDetail.getPrefix());
+    GroupManager gm = prefixAccessManagerMap.get(scheduleDetail.getDataType());
     if (gm == null) {
       try {
         gm = new GroupManager(
           new Name(Common.userPrefix), // user prefix
-          new Name(scheduleDetail.getPrefix()), //data type
+          new Name(scheduleDetail.getDataType()), //data type
           new AndroidSqlite3GroupManagerDb(getApplicationContext().getFilesDir().getAbsolutePath()
-            + "/" + DATA_TYPE_PREFIXES_TO_DB_MAP.get(scheduleDetail.getPrefix())),
+            + "/" + DATA_TYPE_PREFIXES_TO_DB_MAP.get(scheduleDetail.getDataType())),
           // TODO: the database should have a user specific prefix
           Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, Common.keyChain);
-        prefixAccessManagerMap.put(scheduleDetail.getPrefix(), gm);
+        prefixAccessManagerMap.put(scheduleDetail.getDataType(), gm);
         scheduleNameAccessManagerMap.put(scheduleDetail.getName(), gm);
       } catch (SecurityException e) {
         e.printStackTrace();
