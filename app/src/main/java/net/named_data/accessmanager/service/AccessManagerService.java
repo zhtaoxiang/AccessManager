@@ -96,8 +96,9 @@ public class AccessManagerService extends Service {
         @Override
         public void run() {
           try {
+            Log.d(TAG, "register preifx: " + Common.accessControlPrefix);
             m_face.registerPrefix(new Name(Common.accessControlPrefix),
-              new ReceiveInterest(), new RegisterFailed());
+              new ReceiveInterest(prefixAccessManagerMap), new RegisterFailed());
           } catch (IOException | SecurityException e) {
             e.printStackTrace();
           }

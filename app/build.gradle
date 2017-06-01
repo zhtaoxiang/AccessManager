@@ -17,6 +17,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+    }
 }
 
 dependencies {
@@ -30,5 +34,7 @@ dependencies {
         exclude group: 'org.xerial'
     }
     compile 'net.named-data.jndn-xx:jndn-xx-util:0.0.1'
+    compile "com.fasterxml.jackson.core:jackson-annotations:2.5.3"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.5.3"
     testCompile 'junit:junit:4.12'
 }

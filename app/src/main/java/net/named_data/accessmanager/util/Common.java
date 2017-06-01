@@ -73,6 +73,12 @@ public abstract class Common {
     PREDEFINED_ENTITY_NAME_MAP.put("DVU", new EntityInfo("DVU", "/org/openmhealth/dvu", ""));
   }
 
+  public static final int DATA_TYPE_START_INDEX = 4;
+  public static final String EKEY = "/E-KEY";
+  public static final String DKEY = "/D-KEY";
+  public static final String CATALOG = "/catalog";
+  public static final int TIMESTAMP_LEN = 11;
+
   /////////////////////////////////////////////////////////////////////////////////////////////////
   private static KeyChain
   configureKeyChain() {
