@@ -46,7 +46,7 @@ public abstract class Common {
     "DPU processed Data"};
   // data type prefixes
   public static final String[] DATA_TYPE_PREFIXES = new String[] {
-    "",                                              // all data
+    "/fitness",                                      // all data
     "/fitness/physical_activity/time_location",      // Mobile Caputured Data
     "/fitness/physical_activity/processed_result"    // DPU processed Data
   };
@@ -56,7 +56,7 @@ public abstract class Common {
   static
   {
     DATA_TYPE_PREFIXES_TO_DB_MAP = new HashMap<>();
-    DATA_TYPE_PREFIXES_TO_DB_MAP.put("", "_all_data.db");
+    DATA_TYPE_PREFIXES_TO_DB_MAP.put("/fitness", "_all_data.db");
     DATA_TYPE_PREFIXES_TO_DB_MAP.put("/fitness/physical_activity/time_location", "_mobile_data.db");
     DATA_TYPE_PREFIXES_TO_DB_MAP.put("/fitness/physical_activity/processed_result", "_dpu_data.db");
   }
@@ -77,7 +77,7 @@ public abstract class Common {
   public static final String EKEY = "/E-KEY";
   public static final String DKEY = "/D-KEY";
   public static final String CATALOG = "/catalog";
-  public static final int TIMESTAMP_LEN = 11;
+  public static final int TIMESTAMP_LEN = 15;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   private static KeyChain

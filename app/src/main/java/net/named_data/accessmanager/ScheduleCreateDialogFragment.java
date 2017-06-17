@@ -87,10 +87,10 @@ public class ScheduleCreateDialogFragment extends DialogFragment {
             int endHour = Integer.parseInt(endHourView.getText().toString());
 
             if(startHour < 0 || startHour > 23 || endHour < 1 || endHour > 24 || startHour >= endHour
-              || startDate.compareTo(endDate) >= 0) {
+              || startDate.compareTo(endDate) >= 0 || scheduleName.trim().isEmpty()) {
               Toast.makeText(getContext(), "Please correct the input", Toast.LENGTH_LONG).show();
             } else {
-              ScheduleDetail scheduleDetail = new ScheduleDetail(scheduleName,
+              ScheduleDetail scheduleDetail = new ScheduleDetail(scheduleName.trim(),
                 Common.DATA_TYPE_PREFIXES[dataTypeAdapter.getselectedPosition()],
                 startDate, endDate, startHour, endHour);
               ((OnScheduleAddRequested)getTargetFragment()).addSchedule(scheduleDetail);

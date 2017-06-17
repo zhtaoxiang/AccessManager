@@ -46,12 +46,12 @@ import java.util.Map;
  * this class handles E-KEY interest, D-KEY catalog interest and D-KEY interest
  * (1) E-KEY interest is sent by NAC producer, it is of the format:
  *     /org/openmhealth/<user-id>/READ/<data-type>/E-KEY with exclude and childselector
- *     (maybe org/openmhealth/<user-id>/READ/<data-type>/E-KEY/<start-timepoint> is also possible,
+ *     (org/openmhealth/<user-id>/READ/<data-type>/E-KEY/<start-timepoint>/<end-timepoint> is also possible,
  *     but it's not sent by NAC producer)
  * (2) D-KEY catalog interest is sent by DSU, it is of the format:
- *     /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/<end-timepoint>/catalog
+ *     /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/catalog/<start-timepoint>/<end-timepoint>
  * (3) D-KEY interest is of the format:
- *     /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/FOR/<some consumer>
+ *     /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/<end-timepoint>/FOR/<some consumer>
  */
 public class ReceiveInterest implements OnInterestCallback {
   private static final String TAG = "ReceiveInterest";
@@ -65,7 +65,7 @@ public class ReceiveInterest implements OnInterestCallback {
 
   @Override
   public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-    Log.d(TAG, "receive interest: " + interest.getName().toUri());
+    Log.d(TAG, "receive interest: " + interest.toUri());
     String nameStartingFromDataType = interest.getName().getSubName(Common.DATA_TYPE_START_INDEX).toUri();
     // The first portion deals with E-KEY interest
     // The first element is the dataType prefix
@@ -79,38 +79,47 @@ public class ReceiveInterest implements OnInterestCallback {
       if(gm == null)
         return;
       String timepoint;
-      if(dataTypeAndTimestamp[2].isEmpty()) {
+      if(dataTypeAndTimestamp.length == 1) {
         Exclude exclude = interest.getExclude();
         int childSelector = interest.getChildSelector();
         // case (3)
         // for now, only check the E-KEY interest sent by NAC producer
-        if(exclude.size() == 2 && exclude.get(0).getType() == Exclude.Type.ANY &&
-          exclude.get(1).getType() == Exclude.Type.COMPONENT
+        if(exclude.size() == 2 && exclude.get(1).getType() == Exclude.Type.ANY &&
+          exclude.get(0).getType() == Exclude.Type.COMPONENT
           && childSelector == 1) {
-          timepoint = exclude.get(1).getComponent().toEscapedString();
+          timepoint = exclude.get(0).getComponent().toEscapedString();
+          Log.d(TAG, "get exclude");
         } else {
           // TODO: deal with other cases
+          Log.d(TAG, "get nothing");
           return;
         }
       } else {
         // case (1) or (2)
-        timepoint = dataTypeAndTimestamp[2].substring(1, 1 + Common.TIMESTAMP_LEN);
+        timepoint = dataTypeAndTimestamp[1].substring(1, 1 + Common.TIMESTAMP_LEN);
       }
       try {
         List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint));
         face.putData((Data)groupKeys.get(0));
+        Log.d(TAG, ((Data) groupKeys.get(0)).getName().toUri());
       } catch (IOException | EncodingException | SecurityException | GroupManagerDb.Error e) {
         e.printStackTrace();
       }
     } else if(nameStartingFromDataType.contains(Common.DKEY)) {
       // The second portion deals with D-KEY catalog interest
-      // /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/<end-timepoint>/catalog
-      String[] dataTypeAndTimestamp = nameStartingFromDataType.split(Common.DKEY);
+      // /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/catalog/<start-timepoint>/<end-timepoint>
+      String[] dataTypeAndTimestamp = null;
+      if (nameStartingFromDataType.contains(Common.CATALOG)) {
+        dataTypeAndTimestamp = nameStartingFromDataType.split(Common.DKEY + Common.CATALOG);
+      } else {
+        dataTypeAndTimestamp = nameStartingFromDataType.split(Common.DKEY);
+      }
       GroupManager gm = prefixAccessManagerMap.get(dataTypeAndTimestamp[0]);
       if(gm == null)
         return;
-      String timepoint = dataTypeAndTimestamp[2].substring(1, 1 + Common.TIMESTAMP_LEN);
+      String timepoint = dataTypeAndTimestamp[1].substring(1, 1 + Common.TIMESTAMP_LEN);
       try {
+        System.out.println("here");
         List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint));
         if (nameStartingFromDataType.contains(Common.CATALOG)) {
           Data returnedData = new Data();
@@ -126,9 +135,10 @@ public class ReceiveInterest implements OnInterestCallback {
           // signature
           Common.keyChain.sign(returnedData);
           face.putData(returnedData);
+          System.out.println("here");
         } else {
           // The third portion deals with D-KEY interest
-          // /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/FOR/<some consumer>
+          // /org/openmhealth/<user-id>/READ/<data-type>/D-KEY/<start-timepoint>/<end-timepoint>/FOR/<some consumer>
           for(int i = 1; i < groupKeys.size(); i ++) {
             Data oneDKey = (Data)(groupKeys.get(i));
             if (oneDKey.getName().equals(interest.getName())) {
