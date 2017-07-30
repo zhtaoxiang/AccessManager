@@ -30,17 +30,15 @@ import net.named_data.jndn.Interest;
 import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnInterestCallback;
-import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encrypt.GroupManager;
-import net.named_data.jndn.encrypt.GroupManagerDb;
 import net.named_data.jndn.encrypt.Schedule;
-import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.util.Blob;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static net.named_data.accessmanager.util.Common.keyChain;
 
 /**
  * this class handles E-KEY interest, D-KEY catalog interest and D-KEY interest
@@ -99,10 +97,10 @@ public class ReceiveInterest implements OnInterestCallback {
         timepoint = dataTypeAndTimestamp[1].substring(1, 1 + Common.TIMESTAMP_LEN);
       }
       try {
-        List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint));
+        List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint), false);
         face.putData((Data)groupKeys.get(0));
         Log.d(TAG, ((Data) groupKeys.get(0)).getName().toUri());
-      } catch (IOException | EncodingException | SecurityException | GroupManagerDb.Error e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
     } else if(nameStartingFromDataType.contains(Common.DKEY)) {
@@ -120,7 +118,7 @@ public class ReceiveInterest implements OnInterestCallback {
       String timepoint = dataTypeAndTimestamp[1].substring(1, 1 + Common.TIMESTAMP_LEN);
       try {
         System.out.println("here");
-        List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint));
+        List groupKeys = gm.getGroupKey(Schedule.fromIsoString(timepoint), false);
         if (nameStartingFromDataType.contains(Common.CATALOG)) {
           Data returnedData = new Data();
           // name
@@ -133,7 +131,7 @@ public class ReceiveInterest implements OnInterestCallback {
           String content = objectMapper.writeValueAsString(dKeyNames);
           returnedData.setContent(new Blob(content));
           // signature
-          Common.keyChain.sign(returnedData);
+          keyChain.sign(returnedData);
           face.putData(returnedData);
           System.out.println("here");
         } else {
@@ -147,7 +145,7 @@ public class ReceiveInterest implements OnInterestCallback {
             }
           }
         }
-      } catch (IOException | EncodingException | SecurityException | GroupManagerDb.Error e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
     }

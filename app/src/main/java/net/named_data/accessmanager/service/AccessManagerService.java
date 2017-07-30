@@ -1,18 +1,18 @@
 /* -*- Mode:jde; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
  * Copyright (c) 2017 Regents of the University of California
- *
+ * <p>
  * This file is part of NDNFit (NDN fitness) Access Manager.
  * See AUTHORS.md for complete list of NDNFit Access Manage authors and contributors.
- *
+ * <p>
  * NDNFit Access Manager is free software: you can redistribute it and/or modify it under the terms
  * of the GNU General Public License as published by the Free Software Foundation,
  * either version 3 of the License, or (at your option) any later version.
- *
+ * <p>
  * NDNFit Access Manage is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
  * PURPOSE.  See the GNU General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU General Public License along with
  * NDNFit Access Manage, e.g., in COPYING file.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static net.named_data.accessmanager.util.Common.DATA_TYPE_PREFIXES_TO_DB_MAP;
+import static net.named_data.accessmanager.util.Common.keyChain;
 
 public class AccessManagerService extends Service {
   private static final String TAG = "AccessManagerService";
@@ -71,16 +72,16 @@ public class AccessManagerService extends Service {
     m_face = new Face("localhost");
     db = DataBase.getInstance(getApplicationContext());
     try {
-      m_face.setCommandSigningInfo(Common.keyChain, Common.keyChain.getDefaultCertificateName());
-    }
-    catch (SecurityException e) {
+      m_face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
+    } catch (SecurityException e) {
       // shouldn't really happen
       /// @Todo add logging
     }
   }
+
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    if(!isRunning) {
+    if (!isRunning) {
       Log.d(TAG, "onStartCommand()");
       // modify the indicating variable
       isRunning = true;
@@ -99,7 +100,7 @@ public class AccessManagerService extends Service {
             Log.d(TAG, "register preifx: " + Common.accessControlPrefix);
             m_face.registerPrefix(new Name(Common.accessControlPrefix),
               new ReceiveInterest(prefixAccessManagerMap), new RegisterFailed());
-          } catch (IOException | SecurityException e) {
+          } catch (Exception e) {
             e.printStackTrace();
           }
         }
@@ -109,11 +110,11 @@ public class AccessManagerService extends Service {
         @Override
         public void run() {
           try {
-            while(true) {
+            while (true) {
               m_face.processEvents();
               Thread.sleep(5);
             }
-          } catch (IOException | EncodingException| InterruptedException e) {
+          } catch (IOException | EncodingException | InterruptedException e) {
             e.printStackTrace();
           }
         }
@@ -124,7 +125,7 @@ public class AccessManagerService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    if(!isRunning) {
+    if (!isRunning) {
       startService(new Intent(this, AccessManagerService.class));
     }
     return mBinder;
@@ -132,14 +133,14 @@ public class AccessManagerService extends Service {
 
   //returns the instance of the service
   public class LocalBinder extends Binder {
-    public AccessManagerService getServiceInstance(){
+    public AccessManagerService getServiceInstance() {
       return AccessManagerService.this;
     }
   }
 
   // stop the service
   @Override
-  public void onTaskRemoved (Intent rootIntent){
+  public void onTaskRemoved(Intent rootIntent) {
     Log.d(TAG, "AccessManagerService::onTaskRemoved()");
     faceEventProcessExecutor.shutdownNow();
     faceCommandExecutor.shutdown();
@@ -149,10 +150,10 @@ public class AccessManagerService extends Service {
 
   public void addOneSchedule(ScheduleDetail scheduleDetail, boolean isAddedUsingUI) throws Exception {
 
-    if(scheduleDetail == null)
+    if (scheduleDetail == null)
       return;
     Log.d(TAG, "add schedule: " + scheduleDetail.toString());
-    if(scheduleNameAccessManagerMap.get(scheduleDetail.getName()) != null) {
+    if (scheduleNameAccessManagerMap.get(scheduleDetail.getName()) != null) {
       throw new Exception("Cannot add a schedule with an existing name!");
     }
     // check whether the manager exists or not. if not, create a new one
@@ -165,7 +166,7 @@ public class AccessManagerService extends Service {
           new AndroidSqlite3GroupManagerDb(getApplicationContext().getFilesDir().getAbsolutePath()
             + "/" + DATA_TYPE_PREFIXES_TO_DB_MAP.get(scheduleDetail.getDataType())),
           // TODO: the database should have a user specific prefix
-          Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, Common.keyChain);
+          Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, keyChain);
         prefixAccessManagerMap.put(scheduleDetail.getDataType(), gm);
         scheduleNameAccessManagerMap.put(scheduleDetail.getName(), gm);
       } catch (SecurityException e) {
@@ -173,7 +174,7 @@ public class AccessManagerService extends Service {
       }
     }
     // add a schedule: this adds a schedule to the database
-    if(isAddedUsingUI) {
+    if (isAddedUsingUI) {
       Schedule schedule = new Schedule();
       try {
         RepetitiveInterval interval = new RepetitiveInterval(
@@ -192,7 +193,7 @@ public class AccessManagerService extends Service {
   public void addSchedules(List<ScheduleDetail> scheduleDetailList) throws Exception {
     if (scheduleDetailList == null || scheduleDetailList.isEmpty())
       return;
-    for(ScheduleDetail one : scheduleDetailList) {
+    for (ScheduleDetail one : scheduleDetailList) {
       addOneSchedule(one, false);
     }
   }
@@ -202,9 +203,9 @@ public class AccessManagerService extends Service {
     if (membershipDetail == null)
       return;
     Log.d(TAG, "add member: " + membershipDetail.toString());
-    for(final String scheduleName : membershipDetail.getScheduleList()) {
+    for (final String scheduleName : membershipDetail.getScheduleList()) {
       final GroupManager gm = scheduleNameAccessManagerMap.get(scheduleName);
-      if(gm == null) {
+      if (gm == null) {
         throw new Exception("Schedule " + scheduleName + " doesn't exist");
       }
       // fetch key and add member
@@ -218,6 +219,7 @@ public class AccessManagerService extends Service {
               new OnData() {
                 @Override
                 public void onData(Interest interest, Data data) {
+                  Log.d(TAG, "get cert: " + interest.getName());
                   try {
                     gm.addMember(scheduleName, data);
                   } catch (DerDecodingException | GroupManagerDb.Error e) {
@@ -242,8 +244,18 @@ public class AccessManagerService extends Service {
   public void addMembers(List<MembershipDetail> membershipDetailList) throws Exception {
     if (membershipDetailList == null || membershipDetailList.isEmpty())
       return;
-    for(MembershipDetail one : membershipDetailList) {
+    for (MembershipDetail one : membershipDetailList) {
       addOneMember(one);
     }
+  }
+
+  public static byte[] hexStringToByteArray(String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+        + Character.digit(s.charAt(i+1), 16));
+    }
+    return data;
   }
 }
