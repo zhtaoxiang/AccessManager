@@ -23,8 +23,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
-  // if the user chooses a different user id, use a different database
-  public static String DATABASE_NAME = null;
+  // if the user chooses a different user id, then use a different database
+  private static final String DATABASE_NAME = "accessmanager.db";
   private static final int DATABASE_VERSION = 1;
 
   public DataBaseHelper(Context context) {
@@ -35,6 +35,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
   public void onCreate(SQLiteDatabase db) {
     db.execSQL(ScheduleTable.SQL_CREATE_TABLE);
     db.execSQL(MembershipTable.SQL_CREATE_TABLE);
+    db.execSQL(IDTable.SQL_CREATE_TABLE);
   }
 
   @Override

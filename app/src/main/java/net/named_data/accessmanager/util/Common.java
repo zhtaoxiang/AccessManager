@@ -18,26 +18,47 @@
  */
 package net.named_data.accessmanager.util;
 
+import android.content.Context;
+import android.util.Log;
+
+import net.named_data.accessmanager.MainActivity;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
+import net.named_data.jndn.security.certificate.IdentityCertificate;
+import net.named_data.jndn.security.identity.AndroidSqlite3IdentityStorage;
+import net.named_data.jndn.security.identity.FilePrivateKeyStorage;
 import net.named_data.jndn.security.identity.IdentityManager;
+import net.named_data.jndn.security.identity.IdentityStorage;
 import net.named_data.jndn.security.identity.MemoryIdentityStorage;
 import net.named_data.jndn.security.identity.MemoryPrivateKeyStorage;
+import net.named_data.jndn.security.identity.PrivateKeyStorage;
 import net.named_data.jndn.security.policy.SelfVerifyPolicyManager;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class Common {
+  private static final String TAG = "Common";
   public static final int KEY_SIZE = 2048;
   public static final int KEY_FRESHNESS_HOURS = 24 * 365;
   public static final String DATE_SUFFIX = "T000000";
 
-  // TODO: these 3 variables should be gotten from id manager
+  public static Context mCtx;
+  public static String mAppID = "";
+  public static Name mAppCertificateName;
+
+  // these 3 variables should be gotten from id manager
   public static String userPrefix = "/org/openmhealth/haitao";
   public static String accessControlPrefix = userPrefix + "/READ";
   public static KeyChain keyChain = configureKeyChain();
+
+
+  public static void setUserPrefix(Name prefix) {
+    Log.d(TAG, "new user prefix is " + prefix.toString());
+    userPrefix = prefix.toString();
+    accessControlPrefix = userPrefix + "/READ";
+  }
 
   // Data types
   public static final String[] DATA_TYPES = new String[]{
@@ -104,5 +125,55 @@ public abstract class Common {
     }
 
     return _keyChain;
+  }
+
+  public static void setAppID(String appID, Name certName) {
+    mAppID = appID;
+    mAppCertificateName = new Name(certName);
+
+    if (mAppID != null && !mAppID.isEmpty()) {
+      String dbPath = mCtx.getFilesDir().getAbsolutePath() + "/" + MainActivity.DB_NAME;
+      String certDirPath = mCtx.getFilesDir().getAbsolutePath() + "/" + MainActivity.CERT_DIR;
+
+      IdentityStorage identityStorage = new AndroidSqlite3IdentityStorage(dbPath);
+      PrivateKeyStorage privateKeyStorage = new FilePrivateKeyStorage(certDirPath);
+      IdentityManager identityManager = new IdentityManager(identityStorage, privateKeyStorage);
+
+
+      // For now, the verification policy manager, and the face to fetch required cert does not matter
+      // So we use SelfVerifyPolicyManager, and don't call KeyChain.setFace()
+      keyChain = new KeyChain(identityManager, new SelfVerifyPolicyManager(identityStorage));
+      try {
+        Log.d(TAG, "the default certificate is " + keyChain.getDefaultCertificateName().toString());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  public static void setAppID(String appID, IdentityCertificate certificate) {
+    mAppID = appID;
+    mAppCertificateName = new Name(certificate.getName());
+
+    if (mAppID != null && !mAppID.isEmpty()) {
+      String dbPath = mCtx.getFilesDir().getAbsolutePath() + "/" + MainActivity.DB_NAME;
+      String certDirPath = mCtx.getFilesDir().getAbsolutePath() + "/" + MainActivity.CERT_DIR;
+
+      IdentityStorage identityStorage = new AndroidSqlite3IdentityStorage(dbPath);
+      PrivateKeyStorage privateKeyStorage = new FilePrivateKeyStorage(certDirPath);
+      IdentityManager identityManager = new IdentityManager(identityStorage, privateKeyStorage);
+
+
+      // For now, the verification policy manager, and the face to fetch required cert does not matter
+      // So we use SelfVerifyPolicyManager, and don't call KeyChain.setFace()
+      keyChain = new KeyChain(identityManager, new SelfVerifyPolicyManager(identityStorage));
+      try {
+        identityManager.setDefaultIdentity(new Name(mAppID));
+        identityManager.addCertificateAsIdentityDefault(certificate);
+        Log.d(TAG, "the default certificate is set to be " + keyChain.getDefaultCertificateName().toString());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 }

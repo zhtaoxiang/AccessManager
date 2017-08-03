@@ -18,10 +18,14 @@
  */
 package net.named_data.accessmanager;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
@@ -29,10 +33,24 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import net.named_data.accessmanager.database.DataBase;
 import net.named_data.accessmanager.service.AccessManagerService;
+import net.named_data.accessmanager.util.Common;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Name;
+import net.named_data.jndn.Sha256WithRsaSignature;
+import net.named_data.jndn.security.certificate.IdentityCertificate;
+import net.named_data.jndn.security.identity.AndroidSqlite3IdentityStorage;
+import net.named_data.jndn.security.identity.FilePrivateKeyStorage;
+import net.named_data.jndn.security.identity.IdentityManager;
+import net.named_data.jndn.security.identity.IdentityStorage;
+import net.named_data.jndn.security.identity.PrivateKeyStorage;
+import net.named_data.jndn.util.Blob;
 
 import java.util.ArrayList;
 
@@ -83,6 +101,24 @@ public class MainActivity extends AppCompatActivity
         .beginTransaction()
         .replace(R.id.navigation_drawer, m_drawerFragment, DrawerFragment.class.toString())
         .commit();
+    }
+
+    Common.mCtx = getApplicationContext();
+
+    DataBase db = DataBase.getInstance(getApplicationContext());
+    Cursor idRecords = db.getIdRecord();
+    if (idRecords.moveToNext()) {
+      String mAppId = idRecords.getString(0);
+      Name mAppCertificateName = new Name(idRecords.getString(1));
+
+      Common.setUserPrefix(new Name(mAppId).getPrefix(-1));
+      Common.setAppID(mAppId, mAppCertificateName);
+      // omit the app name component from mAppId
+      idRecords.close();
+      Log.d(TAG, "try to start service");
+      startService(new Intent(this, AccessManagerService.class));
+    } else {
+      requestAuthorization();
     }
   }
 
@@ -173,7 +209,119 @@ public class MainActivity extends AppCompatActivity
     }
   };
 
+  // @param certName This string is intended to be the application's id in the future, left as "stub" for now
+  public void requestAuthorization() {
+    AlertDialog.Builder dlgAlert = new AlertDialog.Builder(this);
+    dlgAlert.setMessage("Please choose an identity!");
+    dlgAlert.setTitle("Choose an identity");
+    dlgAlert.setPositiveButton("Ok", new AuthorizeOnClickListener(APP_NAME));
+    dlgAlert.setCancelable(true);
+    dlgAlert.create().show();
+  }
+
+  public class AuthorizeOnClickListener implements DialogInterface.OnClickListener {
+    String mAppName;
+
+    public AuthorizeOnClickListener(String appName) {
+      mAppName = appName;
+    }
+
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+      Intent i = new Intent("com.ndn.jwtan.identitymanager.AUTHORIZE");
+      i.putExtra("app_id", mAppName);
+      startActivityForResult(i, AUTHORIZE_REQUEST);
+    }
+  }
+
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    // Check which request we're responding to
+    if (requestCode == AUTHORIZE_REQUEST) {
+      // Make sure the request was successful
+      if (resultCode == Activity.RESULT_OK) {
+        String signerID = data.getStringExtra("prefix");
+        Name appID = new Name(signerID).append(APP_NAME);
+        mAppId = appID.toUri();
+        try {
+          String encodedString = generateKey(appID.toString());
+          requestSignature(encodedString, signerID);
+        } catch (Exception e) {
+          Log.e(TAG, "Exception in identity generation/request");
+          Log.e(TAG, e.getMessage());
+        }
+      }
+    } else if (requestCode == SIGN_CERT_REQUEST) {
+      if (resultCode == Activity.RESULT_OK) {
+        String signedCert = data.getStringExtra("signed_cert");
+        byte[] decoded = Base64.decode(signedCert, Base64.DEFAULT);
+        Blob blob = new Blob(decoded);
+        Data certData = new Data();
+        try {
+          if (!mAppId.isEmpty()) {
+            certData.wireDecode(blob);
+            IdentityCertificate certificate = new IdentityCertificate(certData);
+            String signerKey = ((Sha256WithRsaSignature) certificate.getSignature()).getKeyLocator().getKeyName().toUri();
+            Log.d(TAG, "Signer key name " + signerKey);
+            Log.d(TAG,"App certificate name: " + certificate.getName().toUri());
+            DataBase.getInstance(getApplicationContext()).insertID(mAppId, certificate.getName().toUri(), signerKey);
+            mAppCertificateName = new Name(certificate.getName());
+            Common.setUserPrefix(new Name(mAppId).getPrefix(-1));
+            Common.setAppID(mAppId, certificate);
+            Log.d(TAG, "try to start service");
+            startService(new Intent(this, AccessManagerService.class));
+          } else {
+            Log.e(TAG, "mAppId empty for result of SIGN_CERT_REQUEST");
+          }
+        } catch (Exception e) {
+          Log.e(getResources().getString(R.string.app_name), e.getMessage());
+        }
+      }
+    }
+  }
+
+
+
+  private String generateKey(String appID) throws net.named_data.jndn.security.SecurityException {
+    String dbPath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + MainActivity.DB_NAME;
+    String certDirPath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + MainActivity.CERT_DIR;
+
+    IdentityStorage identityStorage = new AndroidSqlite3IdentityStorage(dbPath);
+    PrivateKeyStorage privateKeyStorage = new FilePrivateKeyStorage(certDirPath);
+    IdentityManager identityManager = new IdentityManager(identityStorage, privateKeyStorage);
+
+    Name identityName = new Name(appID);
+
+    Name keyName = identityManager.generateRSAKeyPairAsDefault(identityName, true);
+    IdentityCertificate certificate = identityManager.selfSign(keyName);
+
+    String encodedString = Base64.encodeToString(certificate.wireEncode().getImmutableArray(), Base64.DEFAULT);
+    return encodedString;
+  }
+
+  private void requestSignature(String encodedString, String signerID) {
+    Intent i = new Intent("com.ndn.jwtan.identitymanager.SIGN_CERTIFICATE");
+    i.putExtra("cert", encodedString);
+    i.putExtra("signer_id", signerID);
+    i.putExtra("app_id", APP_NAME);
+    startActivityForResult(i, SIGN_CERT_REQUEST);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////////////
+  private static final String APP_NAME = "access_manager";
+  private static final int AUTHORIZE_REQUEST = 1003;
+  private static final int SIGN_CERT_REQUEST = 1004;
+  String mAppId;
+  Name mAppCertificateName;
+
+  // Storage for app keys
+  public static final String DB_NAME = "certDb.db";
+  public static final String CERT_DIR = "certDir";
+
   //////////////////////////////////////////////////////////////////////////////
+  private static final String TAG = "MainActivity";
+
   AccessManagerService mService;
   boolean mBound = false;
 

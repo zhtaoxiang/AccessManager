@@ -69,20 +69,21 @@ public class AccessManagerService extends Service {
 
   @Override
   public void onCreate() {
-    m_face = new Face("localhost");
-    db = DataBase.getInstance(getApplicationContext());
-    try {
-      m_face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
-    } catch (SecurityException e) {
-      // shouldn't really happen
-      /// @Todo add logging
-    }
+    Log.d(TAG, "onCreate()");
   }
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
+    Log.d(TAG, "onStartCommand()");
     if (!isRunning) {
-      Log.d(TAG, "onStartCommand()");
+      m_face = new Face("localhost");
+      db = DataBase.getInstance(getApplicationContext());
+      try {
+        m_face.setCommandSigningInfo(keyChain, keyChain.getDefaultCertificateName());
+      } catch (SecurityException e) {
+        // shouldn't really happen
+        /// @Todo add logging
+      }
       // modify the indicating variable
       isRunning = true;
       // preload existing managers
@@ -125,9 +126,10 @@ public class AccessManagerService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    if (!isRunning) {
-      startService(new Intent(this, AccessManagerService.class));
-    }
+    Log.d(TAG, "onBind");
+//    if (!isRunning) {
+//      startService(new Intent(this, AccessManagerService.class));
+//    }
     return mBinder;
   }
 
@@ -165,7 +167,6 @@ public class AccessManagerService extends Service {
           new Name(scheduleDetail.getDataType()), //data type
           new AndroidSqlite3GroupManagerDb(getApplicationContext().getFilesDir().getAbsolutePath()
             + "/" + DATA_TYPE_PREFIXES_TO_DB_MAP.get(scheduleDetail.getDataType())),
-          // TODO: the database should have a user specific prefix
           Common.KEY_SIZE, Common.KEY_FRESHNESS_HOURS, keyChain);
         prefixAccessManagerMap.put(scheduleDetail.getDataType(), gm);
         scheduleNameAccessManagerMap.put(scheduleDetail.getName(), gm);

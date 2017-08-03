@@ -161,4 +161,23 @@ public class DataBase {
     SQLiteDatabase db = dbHelper.getWritableDatabase();
     db.insert(MembershipTable.TABLE_NAME, null, values);
   }
+
+  public Cursor getIdRecord() {
+    SQLiteDatabase db = dbHelper.getReadableDatabase();
+    String[] projection = {IDTable.APP_ID, IDTable.APP_CERT_NAME, IDTable.SIGNER_ID};
+    return db.query(
+      IDTable.TABLE_NAME,
+      projection, null, null, null, null, null);
+  }
+
+  public void insertID(String appID, String certName, String signerID) {
+    ContentValues values = new ContentValues();
+
+    values.put(IDTable.APP_ID, appID);
+    values.put(IDTable.APP_CERT_NAME, certName);
+    values.put(IDTable.SIGNER_ID, signerID);
+
+    SQLiteDatabase db = dbHelper.getWritableDatabase();
+    int result = (int) db.insert(IDTable.TABLE_NAME, null, values);
+  }
 }
