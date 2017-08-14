@@ -37,5 +37,5 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.5.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.5.3'
     testCompile 'junit:junit:4.12'
-    compile files('libs/jndn-0.15.jar')
+    compile files('libs/jndn-android-0.15.jar')
 }
