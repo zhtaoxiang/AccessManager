@@ -55,6 +55,7 @@ public class DrawerFragment extends Fragment {
 
     DrawerFragment fragment = new DrawerFragment();
     fragment.setArguments(drawerParams);
+    fragment.m_shouldHideOptionsMenu = false;
     return fragment;
   }
 
