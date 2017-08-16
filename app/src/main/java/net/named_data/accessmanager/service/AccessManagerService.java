@@ -33,8 +33,10 @@ import net.named_data.accessmanager.util.Common;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
+import net.named_data.jndn.InterestFilter;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnInterestCallback;
 import net.named_data.jndn.OnTimeout;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.encoding.der.DerDecodingException;
@@ -101,6 +103,21 @@ public class AccessManagerService extends Service {
             Log.d(TAG, "register preifx: " + Common.accessControlPrefix);
             m_face.registerPrefix(new Name(Common.accessControlPrefix),
               new ReceiveInterest(prefixAccessManagerMap), new RegisterFailed());
+            m_face.registerPrefix(Common.mAppCertificateName.getPrefix(-1),
+              new OnInterestCallback() {
+                @Override
+                public void onInterest(Name name, Interest interest, Face face, long l, InterestFilter interestFilter) {
+                  Log.d(TAG, "<< I: " + interest.toUri());
+                  try {
+                    if (interest.getName().isPrefixOf(Common.mAppCertificateName)) {
+                      face.putData(keyChain.getCertificate(Common.mAppCertificateName));
+                      Log.d(TAG, ">> D: " + Common.mAppCertificateName.toUri());
+                    }
+                  } catch (Exception ex) {
+                    Log.e(TAG, "exception: " + ex.getMessage());
+                  }
+                }
+              }, new RegisterFailed());
           } catch (Exception e) {
             e.printStackTrace();
           }
