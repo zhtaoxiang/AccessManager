@@ -90,8 +90,8 @@ public abstract class Common {
   static
   {
     PREDEFINED_ENTITY_NAME_MAP = new HashMap<>();
-    PREDEFINED_ENTITY_NAME_MAP.put("DPU", new EntityInfo("DPU", "/org/openmhealth/dpu", "/org/openmhealth/dpu/KEY"));
-    PREDEFINED_ENTITY_NAME_MAP.put("DVU", new EntityInfo("DVU", "/org/openmhealth/dvu", "/org/openmhealth/dvu/KEY"));
+    PREDEFINED_ENTITY_NAME_MAP.put("DPU", new EntityInfo("DPU", "/org/openmhealth/dpu", "/org/openmhealth/KEY/dpu"));
+    PREDEFINED_ENTITY_NAME_MAP.put("DVU", new EntityInfo("DVU", "/org/openmhealth/dvu", "/org/openmhealth/KEY/dvu"));
   }
 
   public static final int DATA_TYPE_START_INDEX = 4;
